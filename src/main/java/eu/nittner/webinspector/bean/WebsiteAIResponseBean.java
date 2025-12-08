@@ -1,12 +1,12 @@
 package eu.nittner.webinspector.bean;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
+@Data
 public class WebsiteAIResponseBean {
     private String summary;
     private String category;

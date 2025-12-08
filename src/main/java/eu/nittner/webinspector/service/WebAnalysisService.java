@@ -21,6 +21,9 @@ public class WebAnalysisService {
             InputStream inputStream = new ByteArrayInputStream(websiteContent.getBytes(StandardCharsets.UTF_8));
             Document doc = Jsoup.parse(inputStream, "UTF-8", websiteUrl);
 
+            resultsBean.setTitle(doc.title());
+            resultsBean.setWordCount(getWordCount(doc.text()));
+
             getLinks(resultsBean, doc);
             getHeadings(resultsBean, doc);
 
@@ -28,6 +31,10 @@ public class WebAnalysisService {
         } catch (Exception e) {
             throw new WebAnalysisException("Error analyzing website content", e);
         }
+    }
+
+    private long getWordCount(String text) {
+        return text.split("\\s+").length;
     }
 
     private void getHeadings(WebAnalysisResultsBean resultsBean, Document doc) {

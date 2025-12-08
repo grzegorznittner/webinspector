@@ -3,6 +3,7 @@ package eu.nittner.webinspector.api;
 import eu.nittner.webinspector.api.dto.AnalyseRequest;
 import eu.nittner.webinspector.api.dto.AnalyseResponse;
 import eu.nittner.webinspector.service.WebInspectorService;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,7 +16,7 @@ public class WebInspectorController {
 
     private final WebInspectorService webInspectorService;
 
-    public WebInspectorController(WebInspectorService webInspectorService) {
+    public WebInspectorController(WebInspectorService webInspectorService, ChatClient.Builder chatClientBuilder) {
         this.webInspectorService = webInspectorService;
     }
 
