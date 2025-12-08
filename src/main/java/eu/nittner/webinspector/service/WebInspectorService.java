@@ -5,13 +5,15 @@ import eu.nittner.webinspector.api.dto.AnalyseResponse;
 import eu.nittner.webinspector.bean.WebAnalysisResultsBean;
 import eu.nittner.webinspector.bean.WebContentBean;
 import eu.nittner.webinspector.bean.WebsiteAIResponseBean;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class WebInspectorService {
-    private WebContentService webContentService;
-    private WebAnalysisService webAnalysisService;
-    private WebsiteAIService websiteAIService;
+    private final WebContentService webContentService;
+    private final WebAnalysisService webAnalysisService;
+    private final WebsiteAIService websiteAIService;
 
     public AnalyseResponse analyse(AnalyseRequest request) {
         if (request == null || request.getWebsiteUrl() == null || request.getWebsiteUrl().isBlank()) {

@@ -21,6 +21,8 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
         }
         button {
             padding: 10px 20px;
@@ -31,22 +33,104 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #45a049;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .result {
+            margin-top: 20px;
+            text-align: left;
+            display: none;
+        }
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Web Inspector Demo</h1>
-        <p>Click the button below to see a JavaScript alert</p>
-        <button onclick="showAlert()">Click Me!</button>
+        <p>Enter a URL to analyze</p>
+        <input type="text" id="urlInput" placeholder="https://example.com">
+        <button id="analyzeButton">Analyze URL</button>
+
+        <div class="loading" id="loadingIndicator">
+            <p>Analyzing URL, please wait...</p>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+
+        <div class="result" id="resultContainer">
+            <h2>Analysis Result</h2>
+            <pre id="resultJson"></pre>
+        </div>
     </div>
 
     <script>
-        function showAlert() {
-            alert("Hello! This is a JavaScript alert.");
+        document.getElementById('analyzeButton').addEventListener('click', function() {
+            const url = document.getElementById('urlInput').value.trim();
+
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'block';
+            // Hide previous results and errors
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+
+            // Make API request
+            fetch('/webinspector/analyse', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ websiteUrl: url })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+
+                // Display result
+                document.getElementById('resultJson').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('resultContainer').style.display = 'block';
+            })
+            .catch(error => {
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+
+                // Show error message
+                showError('Error analyzing URL: ' + error.message);
+            });
+        });
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
         }
     </script>
 </body>
