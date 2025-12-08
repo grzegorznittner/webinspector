@@ -4,17 +4,48 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class AnalyseResponse {
-    /**
-     * High‑level textual analysis of the input content.
-     */
-    private String summary;
+    private Metrics metrics;
+    private Content content;
+    private AiInfo aiInfo;
 
-    /**
-     * Optional structured detail (e.g. issues found, metadata).
-     */
-    private String details;
+    // Legacy constructor for backward compatibility
+    public AnalyseResponse(String summary, String details) {
+        this.aiInfo = new AiInfo();
+        this.aiInfo.setSummary(summary);
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Metrics {
+        private long loadTime;
+        private long contentSize;
+        private String contentType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Content {
+        private String title;
+        private List<String> metadata;
+        private long wordCount;
+        private List<String> headings;
+        private List<String> topWords;
+        private List<String> links;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AiInfo {
+        private String summary;
+        private String category;
+        private double accessibilityScore;
+    }
 }
