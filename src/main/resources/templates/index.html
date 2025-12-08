@@ -1,137 +1,1359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Inspector</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f5f5f5;
+        :root {
+            --accent: #7c3aed;
+            --accent-soft: rgba(124, 58, 237, 0.15);
+            --accent-2: #06b6d4;
+            --bg: #050816;
+            --card-bg: rgba(15, 23, 42, 0.9);
+            --border: rgba(148, 163, 184, 0.25);
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --danger: #f97373;
+            --success: #22c55e;
+            --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.9);
         }
-        .container {
-            text-align: center;
-            padding: 30px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 600px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+
+        * {
             box-sizing: border-box;
         }
-        .result {
-            margin-top: 20px;
-            text-align: left;
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+            "Segoe UI", sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%);
+            color: var(--text-main);
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        /* Animated background blobs */
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: -20%;
+            background:
+                    radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12), transparent 55%),
+                    radial-gradient(circle at 80% 80%, rgba(250, 250, 250, 0.04), transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.18), transparent 50%);
+            mix-blend-mode: screen;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: -2;
+            animation: floatBg 18s ease-in-out infinite alternate;
+        }
+
+        body::after {
+            filter: blur(40px);
+            opacity: 0.4;
+            animation-duration: 26s;
+            animation-delay: -8s;
+        }
+
+        @keyframes floatBg {
+            0% {
+                transform: translate3d(-10px, 0, 0) scale(1);
+            }
+            50% {
+                transform: translate3d(10px, -12px, 0) scale(1.05);
+            }
+            100% {
+                transform: translate3d(-4px, 12px, 0) scale(1.03);
+            }
+        }
+
+        .shell {
+            width: 100%;
+            max-width: 1120px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+            gap: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 16px;
+            }
+            .shell {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .neon-border {
+            position: absolute;
+            inset: -1px;
+            border-radius: 26px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background:
+                    radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.18), transparent 60%),
+                    radial-gradient(circle at 100% 100%, rgba(129, 140, 248, 0.35), transparent 55%);
+            opacity: 0.45;
+            filter: blur(10px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .panel {
+            position: relative;
+            background: radial-gradient(circle at top left, rgba(148, 163, 255, 0.18), transparent 60%),
+            radial-gradient(circle at bottom, rgba(16, 185, 129, 0.1), transparent 55%),
+            var(--card-bg);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            padding: 24px 24px 20px;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            backdrop-filter: blur(18px);
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(148, 163, 184, 0.12), transparent 40%),
+            radial-gradient(circle at top right, rgba(56, 189, 248, 0.05), transparent 55%);
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .panel-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* LEFT PANEL - Input / header */
+        .app-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .app-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #f9fafb;
+        }
+
+        .sparkle {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 10%, #f9fafb, transparent 60%);
+            box-shadow:
+                    0 0 25px rgba(251, 191, 36, 0.9),
+                    0 0 6px rgba(253, 224, 71, 0.75);
+            position: relative;
+            overflow: hidden;
+            animation: pulseGlow 1.6s ease-in-out infinite;
+        }
+
+        .sparkle::before {
+            content: "";
+            position: absolute;
+            inset: 18%;
+            border-radius: inherit;
+            background:
+                    conic-gradient(from 120deg,
+                    rgba(251, 191, 36, 0.6),
+                    rgba(244, 114, 182, 0.7),
+                    rgba(45, 212, 191, 0.7),
+                    rgba(251, 191, 36, 0.6));
+            mix-blend-mode: screen;
+            filter: blur(4px);
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                transform: scale(0.92) rotate(0deg);
+                box-shadow:
+                        0 0 18px rgba(251, 191, 36, 0.75),
+                        0 0 4px rgba(253, 224, 71, 0.6);
+            }
+            50% {
+                transform: scale(1.04) rotate(12deg);
+                box-shadow:
+                        0 0 38px rgba(249, 115, 22, 0.9),
+                        0 0 12px rgba(253, 224, 71, 0.9);
+            }
+            100% {
+                transform: scale(0.92) rotate(0deg);
+                box-shadow:
+                        0 0 18px rgba(251, 191, 36, 0.75),
+                        0 0 4px rgba(253, 224, 71, 0.6);
+            }
+        }
+
+        .badge {
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.4), transparent 55%);
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--accent-2);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.9);
+        }
+
+        .subtitle {
+            margin: 0 0 18px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 32rem;
+        }
+
+        .subtitle strong {
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .url-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .url-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        .url-input-wrap {
+            position: relative;
+            flex: 1;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 12px 40px 12px 42px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.9);
+            outline: none;
+            transition:
+                    border 0.2s ease,
+                    box-shadow 0.25s ease,
+                    transform 0.16s ease,
+                    background 0.2s ease;
+        }
+
+        .url-input::placeholder {
+            color: rgba(148, 163, 184, 0.7);
+        }
+
+        .url-input:focus {
+            border-color: var(--accent);
+            box-shadow:
+                    0 0 0 1px rgba(129, 140, 248, 0.6),
+                    0 18px 55px rgba(56, 189, 248, 0.5);
+            transform: translateY(-0.5px);
+            background: radial-gradient(circle at top, rgba(129, 140, 248, 0.4), transparent 65%), rgba(15, 23, 42, 0.98);
+        }
+
+        .url-input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .input-hint {
+            margin-top: 2px;
+            font-size: 0.75rem;
+            color: rgba(148, 163, 184, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-hint-kbd {
+            border-radius: 6px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            padding: 2px 5px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #e5e7eb;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
+        }
+
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            border-radius: 999px;
+            border: none;
+            background: radial-gradient(circle at 10% 0, #f97316 0, #e11d48 40%, #6366f1 100%);
+            padding: 11px 20px;
+            color: #f9fafb;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow:
+                    0 0 25px rgba(236, 72, 153, 0.9),
+                    0 12px 30px rgba(124, 58, 237, 0.65);
+            transition:
+                    transform 0.14s ease,
+                    box-shadow 0.18s ease,
+                    filter 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary span.icon {
+            font-size: 1rem;
+            display: inline-block;
+            transform-origin: center;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px) scale(1.02);
+            box-shadow:
+                    0 0 40px rgba(236, 72, 153, 1),
+                    0 20px 45px rgba(79, 70, 229, 0.9);
+            filter: saturate(1.2);
+        }
+
+        .btn-primary:hover span.icon {
+            transform: translateX(3px) rotate(-8deg);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow:
+                    0 0 14px rgba(236, 72, 153, 0.65),
+                    0 12px 25px rgba(79, 70, 229, 0.8);
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            min-height: 22px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+        }
+
+        .status-pill.idle .status-dot {
+            background: rgba(148, 163, 184, 0.9);
+            box-shadow: none;
+        }
+
+        .status-pill.error .status-dot {
+            background: var(--danger);
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.9);
+        }
+
+        .status-pill-text {
+            max-width: 16rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .error-message {
+            font-size: 0.8rem;
+            color: #fecaca;
             display: none;
         }
+
+        /* Loading animation */
         .loading {
             display: none;
-            margin-top: 20px;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
         }
-        .error {
-            color: red;
+
+        .loading-orbit {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            border: 1px dashed rgba(148, 163, 184, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: orbitSpin 1.4s linear infinite;
+        }
+
+        .loading-orbit::before {
+            content: "";
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: radial-gradient(circle, #38bdf8, #6366f1);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+            animation: pulseDot 0.9s ease-in-out infinite alternate;
+        }
+
+        @keyframes orbitSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulseDot {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        .tip {
+            margin-top: 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .tip-icon {
+            font-size: 0.9rem;
+            margin-top: 1px;
+        }
+
+        /* RIGHT PANEL - Results */
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .results-title {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: rgba(249, 250, 251, 0.78);
+        }
+
+        .results-title span {
+            opacity: 0.6;
+        }
+
+        .results-badge {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.55);
+            background: radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.45), transparent 55%);
+            color: #e5e7eb;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+            gap: 12px;
             margin-top: 10px;
+        }
+
+        @media (max-width: 1100px) {
+            .results-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.15), transparent 55%), rgba(15, 23, 42, 0.9);
+            padding: 14px 14px 12px;
+            position: relative;
+            overflow: hidden;
+            transform-origin: top center;
+            transform: translateY(6px) scale(0.99);
+            opacity: 0;
+            transition:
+                    opacity 0.2s ease-out,
+                    transform 0.22s ease-out,
+                    box-shadow 0.2s ease;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.9);
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(56, 189, 248, 0.2), transparent 45%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .card:hover::after {
+            opacity: 0.8;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(226, 232, 240, 0.9);
+        }
+
+        .chip {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            color: rgba(226, 232, 240, 0.8);
+        }
+
+        .summary-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: rgba(226, 232, 240, 0.9);
+        }
+
+        .summary-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 3px;
+            color: #e5e7eb;
+        }
+
+        .summary-category {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(148, 163, 184, 0.9);
+            margin-bottom: 8px;
+        }
+
+        /* Accessibility meter */
+        .accessibility-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .gauge {
+            width: 64px;
+            height: 64px;
+            border-radius: 999px;
+            background:
+                    radial-gradient(circle at 50% 45%, rgba(15, 23, 42, 0.9), transparent 55%),
+                    conic-gradient(from -90deg, var(--accent-2) 0, var(--accent-2) var(--gauge-angle, 0deg), rgba(31, 41, 55, 0.6) var(--gauge-angle, 0deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow:
+                    0 0 35px rgba(56, 189, 248, 0.7),
+                    0 0 0 1px rgba(15, 23, 42, 1);
+            overflow: hidden;
+        }
+
+        .gauge::before {
+            content: "";
+            width: 76%;
+            height: 76%;
+            border-radius: inherit;
+            background: radial-gradient(circle at 30% 0%, rgba(148, 163, 184, 0.28), transparent 50%), #020617;
+            box-shadow: inset 0 0 25px rgba(15, 23, 42, 1);
+        }
+
+        .gauge-score {
+            position: absolute;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #e5e7eb;
+        }
+
+        .gauge-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(148, 163, 184, 0.9);
+            position: absolute;
+            bottom: 6px;
+        }
+
+        .gauge-caption {
+            flex: 1;
+        }
+
+        .gauge-caption-main {
+            font-size: 0.82rem;
+            margin-bottom: 4px;
+        }
+
+        .gauge-caption-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Metrics */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .stat {
+            padding: 7px 8px;
+            border-radius: 12px;
+            background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.3), transparent 55%), rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(30, 64, 175, 0.85);
+            font-size: 0.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: rgba(148, 163, 184, 0.9);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #f9fafb;
+        }
+
+        .stat-sublabel {
+            font-size: 0.7rem;
+            color: rgba(148, 163, 184, 0.9);
+        }
+
+        /* Content card */
+        .content-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 4px;
+        }
+
+        .content-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .content-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .pill {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: radial-gradient(circle at top, rgba(148, 163, 184, 0.45), transparent 55%), rgba(15, 23, 42, 0.85);
+            color: #e5e7eb;
+        }
+
+        .pill.muted {
+            opacity: 0.8;
+            font-size: 0.72rem;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .headings-list,
+        .links-list {
+            list-style: none;
+            padding: 0;
+            margin: 4px 0 0;
+            max-height: 120px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .headings-list li,
+        .links-list li {
+            font-size: 0.78rem;
+            padding: 4px 6px;
+            border-radius: 8px;
+            margin-bottom: 2px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(51, 65, 85, 0.95);
+        }
+
+        .links-list a {
+            color: #38bdf8;
+            text-decoration: none;
+            word-break: break-all;
+            font-size: 0.78rem;
+        }
+
+        .links-list a:hover {
+            text-decoration: underline;
+        }
+
+        /* Raw JSON */
+        .json-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .json-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            user-select: none;
+        }
+
+        .json-toggle-switch {
+            width: 28px;
+            height: 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.8);
+            padding: 1px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .json-toggle-thumb {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 1);
+            transform: translateX(0);
+            transition: transform 0.18s ease, background 0.18s ease;
+        }
+
+        .json-toggle.on .json-toggle-thumb {
+            transform: translateX(12px);
+            background: #22c55e;
+        }
+
+        .json-toggle.on .json-toggle-label {
+            color: #e5e7eb;
+        }
+
+        .json-toggle-label {
+            font-size: 0.75rem;
+        }
+
+        .json-container {
+            margin-top: 6px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.96);
+            border: 1px solid rgba(30, 64, 175, 0.8);
+            padding: 8px;
+            max-height: 220px;
+            overflow: auto;
             display: none;
+        }
+
+        .json-container pre {
+            margin: 0;
+            font-family: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.78rem;
+            color: #e5e7eb;
+        }
+
+        /* Empty state */
+        .empty-state {
+            margin-top: 10px;
+            padding: 12px 13px;
+            border-radius: 14px;
+            border: 1px dashed rgba(148, 163, 184, 0.7);
+            background: rgba(15, 23, 42, 0.9);
+            font-size: 0.8rem;
+            color: rgba(148, 163, 184, 0.95);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-state-icon {
+            font-size: 1rem;
+        }
+
+        /* Enter key hint on mobile hidden */
+        @media (max-width: 600px) {
+            .input-hint {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Web Inspector Demo</h1>
-        <p>Enter a URL to analyze</p>
-        <input type="text" id="urlInput" placeholder="https://example.com">
-        <button id="analyzeButton">Analyze URL</button>
+<div class="shell">
+    <div class="panel">
+        <div class="neon-border"></div>
+        <div class="panel-inner">
+            <div class="app-title-row">
+                <div class="app-title">
+                    <div class="sparkle"></div>
+                    Web Inspector
+                </div>
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    Realtime AI Site Scanner
+                </div>
+            </div>
 
-        <div class="loading" id="loadingIndicator">
-            <p>Analyzing URL, please wait...</p>
-        </div>
+            <p class="subtitle">
+                Drop in any URL and get a <strong>cinematic breakdown</strong> of its performance,
+                content, and accessibility — rendered as a living, animated dashboard.
+            </p>
 
-        <div class="error" id="errorMessage"></div>
+            <div class="url-row">
+                <div class="url-input-wrap">
+                    <span class="url-input-icon">🌐</span>
+                    <input
+                            type="text"
+                            id="urlInput"
+                            class="url-input"
+                            placeholder="https://example.com"
+                            autocomplete="off"
+                    />
+                    <div class="input-hint">
+                        <span>Press</span>
+                        <span class="input-hint-kbd">Enter</span>
+                        <span>or hit Analyze</span>
+                    </div>
+                </div>
+                <button id="analyzeButton" class="btn-primary">
+                    <span>Analyze</span>
+                    <span class="icon">⚡️</span>
+                </button>
+            </div>
 
-        <div class="result" id="resultContainer">
-            <h2>Analysis Result</h2>
-            <pre id="resultJson"></pre>
+            <div class="status-row">
+                <div id="statusPill" class="status-pill idle">
+                    <span class="status-dot"></span>
+                    <span class="status-pill-text" id="statusText">Idle – waiting for a URL.</span>
+                </div>
+                <div class="loading" id="loadingIndicator">
+                    <div class="loading-orbit"></div>
+                    <span>Scanning DOM, scripts & structure…</span>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+
+            <div class="tip">
+                <span class="tip-icon">💡</span>
+                <span>Try a complex site with rich content (like a news portal or documentation hub) to see the full visualization come alive.</span>
+            </div>
         </div>
     </div>
 
-    <script>
-        document.getElementById('analyzeButton').addEventListener('click', function() {
-            const url = document.getElementById('urlInput').value.trim();
+    <div class="panel">
+        <div class="neon-border"></div>
+        <div class="panel-inner">
+            <div class="results-header">
+                <div class="results-title">
+                    <span>//</span> Analysis Output
+                </div>
+                <div class="results-badge" id="resultsBadge">Awaiting first scan</div>
+            </div>
 
-            if (!url) {
-                showError('Please enter a URL');
-                return;
-            }
+            <div id="emptyState" class="empty-state">
+                <span class="empty-state-icon">✨</span>
+                <span>
+                        No analysis yet. Paste a URL on the left and let the inspector render
+                        a fully animated breakdown of your site’s <strong>metrics</strong>, <strong>content</strong> &amp; <strong>AI insights</strong>.
+                    </span>
+            </div>
 
-            // Show loading indicator
-            document.getElementById('loadingIndicator').style.display = 'block';
-            // Hide previous results and errors
-            document.getElementById('resultContainer').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
+            <div id="resultsWrapper" style="display:none;">
+                <div class="card" id="cardSummary">
+                    <div class="card-header">
+                        <div class="card-title">AI Site Brief</div>
+                        <div class="chip" id="chipCategory">Category: —</div>
+                    </div>
+                    <div class="summary-text">
+                        <div class="summary-title" id="contentTitle">—</div>
+                        <div class="summary-category" id="summaryCategory">—</div>
+                        <div id="aiSummary">
+                            Paste a URL to generate a human-friendly summary of this page.
+                        </div>
+                    </div>
+                    <div class="accessibility-row">
+                        <div class="gauge" id="gauge" style="--gauge-angle: 0deg">
+                            <div class="gauge-score" id="gaugeScore">0</div>
+                            <div class="gauge-label">A11y</div>
+                        </div>
+                        <div class="gauge-caption">
+                            <div class="gauge-caption-main" id="gaugeCaptionMain">
+                                No accessibility data yet.
+                            </div>
+                            <div class="gauge-caption-sub" id="gaugeCaptionSub">
+                                Once analyzed, this gauge shows how friendly the page is for assistive technologies.
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            // Make API request
-            fetch('/webinspector/analyse', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ websiteUrl: url })
-            })
-            .then(response => {
+                <div class="results-grid">
+                    <div class="card" id="cardMetrics">
+                        <div class="card-header">
+                            <div class="card-title">Core Metrics</div>
+                            <div class="chip">Performance • Network</div>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat">
+                                <div class="stat-label">Load Time</div>
+                                <div class="stat-value" id="metricLoadTime">—</div>
+                                <div class="stat-sublabel" id="metricLoadTimeRaw">—</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Content Size</div>
+                                <div class="stat-value" id="metricContentSize">—</div>
+                                <div class="stat-sublabel" id="metricContentType">—</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Word Count</div>
+                                <div class="stat-value" id="metricWordCount">—</div>
+                                <div class="stat-sublabel">Text density</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="cardContent">
+                        <div class="card-header">
+                            <div class="card-title">Content Structure</div>
+                            <div class="chip" id="chipHeadings">Headings: 0</div>
+                        </div>
+                        <div class="content-title">Top Words</div>
+                        <div class="content-pills" id="topWordsContainer"></div>
+
+                        <div class="content-title" style="margin-top:8px;">Headings</div>
+                        <ul class="headings-list" id="headingsList"></ul>
+                    </div>
+                </div>
+
+                <div class="card" id="cardLinks">
+                    <div class="card-header">
+                        <div class="card-title">Links & Navigation</div>
+                        <div class="chip" id="chipLinks">Links: 0</div>
+                    </div>
+                    <ul class="links-list" id="linksList"></ul>
+                </div>
+
+                <div class="card" id="cardJson">
+                    <div class="card-header">
+                        <div class="card-title">Raw JSON Payload</div>
+                        <div class="chip">Developer view</div>
+                    </div>
+                    <div class="json-toggle-row">
+                        <div class="json-toggle" id="jsonToggle">
+                            <div class="json-toggle-switch">
+                                <div class="json-toggle-thumb"></div>
+                            </div>
+                            <span class="json-toggle-label">Show raw response</span>
+                        </div>
+                        <div style="font-size:0.7rem; color:var(--text-muted);">
+                            Perfect for debugging or feeding into other tools.
+                        </div>
+                    </div>
+                    <div class="json-container" id="jsonContainer">
+                        <pre id="resultJson"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const urlInput = document.getElementById('urlInput');
+    const analyzeButton = document.getElementById('analyzeButton');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const errorMessage = document.getElementById('errorMessage');
+    const statusPill = document.getElementById('statusPill');
+    const statusText = document.getElementById('statusText');
+    const resultsWrapper = document.getElementById('resultsWrapper');
+    const emptyState = document.getElementById('emptyState');
+    const resultsBadge = document.getElementById('resultsBadge');
+
+    const cardSummary = document.getElementById('cardSummary');
+    const cardMetrics = document.getElementById('cardMetrics');
+    const cardContent = document.getElementById('cardContent');
+    const cardLinks = document.getElementById('cardLinks');
+    const cardJson = document.getElementById('cardJson');
+
+    const contentTitle = document.getElementById('contentTitle');
+    const summaryCategory = document.getElementById('summaryCategory');
+    const aiSummary = document.getElementById('aiSummary');
+    const chipCategory = document.getElementById('chipCategory');
+
+    const gauge = document.getElementById('gauge');
+    const gaugeScore = document.getElementById('gaugeScore');
+    const gaugeCaptionMain = document.getElementById('gaugeCaptionMain');
+    const gaugeCaptionSub = document.getElementById('gaugeCaptionSub');
+
+    const metricLoadTime = document.getElementById('metricLoadTime');
+    const metricLoadTimeRaw = document.getElementById('metricLoadTimeRaw');
+    const metricContentSize = document.getElementById('metricContentSize');
+    const metricContentType = document.getElementById('metricContentType');
+    const metricWordCount = document.getElementById('metricWordCount');
+
+    const topWordsContainer = document.getElementById('topWordsContainer');
+    const headingsList = document.getElementById('headingsList');
+    const chipHeadings = document.getElementById('chipHeadings');
+
+    const linksList = document.getElementById('linksList');
+    const chipLinks = document.getElementById('chipLinks');
+
+    const jsonToggle = document.getElementById('jsonToggle');
+    const jsonContainer = document.getElementById('jsonContainer');
+    const resultJson = document.getElementById('resultJson');
+
+    function setStatus(type, message) {
+        statusPill.classList.remove('idle', 'error');
+        if (type === 'error') {
+            statusPill.classList.add('error');
+        } else if (type === 'idle') {
+            statusPill.classList.add('idle');
+        }
+        statusText.textContent = message;
+    }
+
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        setStatus('error', message);
+    }
+
+    function clearError() {
+        errorMessage.textContent = '';
+        errorMessage.style.display = 'none';
+    }
+
+    function startLoading() {
+        loadingIndicator.style.display = 'flex';
+        resultsBadge.textContent = 'Analyzing…';
+        resultsBadge.style.opacity = '0.9';
+        setStatus('idle', 'Talking to the analyzer service…');
+    }
+
+    function stopLoading() {
+        loadingIndicator.style.display = 'none';
+    }
+
+    function animateGauge(score) {
+        // score expected 0–1 or 0–100
+        let normalized = score;
+        if (normalized > 1) {
+            normalized = normalized / 100;
+        }
+        normalized = Math.max(0, Math.min(1, normalized));
+        const angle = normalized * 360;
+        gauge.style.setProperty('--gauge-angle', angle + 'deg');
+        gaugeScore.textContent = Math.round(normalized * 100);
+
+        if (normalized >= 0.8) {
+            gaugeCaptionMain.textContent = 'Excellent accessibility – very inclusive experience.';
+        } else if (normalized >= 0.6) {
+            gaugeCaptionMain.textContent = 'Solid accessibility – a few improvements could help.';
+        } else if (normalized >= 0.4) {
+            gaugeCaptionMain.textContent = 'Moderate accessibility – some key fixes recommended.';
+        } else if (normalized > 0) {
+            gaugeCaptionMain.textContent = 'Poor accessibility – likely hard to use for many people.';
+        } else {
+            gaugeCaptionMain.textContent = 'No accessibility score provided.';
+        }
+
+        gaugeCaptionSub.textContent =
+            'Score derived from semantic structure, contrast hints and general best practices.';
+    }
+
+    function formatBytes(bytes) {
+        if (!bytes && bytes !== 0) return '—';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let idx = 0;
+        let value = bytes;
+        while (value >= 1024 && idx < units.length - 1) {
+            value /= 1024;
+            idx++;
+        }
+        return value.toFixed(idx === 0 ? 0 : 2) + ' ' + units[idx];
+    }
+
+    function formatMs(ms) {
+        if (!ms && ms !== 0) return '—';
+        if (ms < 1000) return ms + ' ms';
+        const sec = ms / 1000;
+        if (sec < 60) return sec.toFixed(2) + ' s';
+        const min = Math.floor(sec / 60);
+        const remaining = sec % 60;
+        return min + ' min ' + remaining.toFixed(0) + ' s';
+    }
+
+    function renderAnalysis(data, url) {
+        // Mark results as visible
+        emptyState.style.display = 'none';
+        resultsWrapper.style.display = 'block';
+
+        [cardSummary, cardMetrics, cardContent, cardLinks, cardJson].forEach((card, idx) => {
+            setTimeout(() => {
+                card.classList.add('visible');
+            }, 60 * (idx + 1));
+        });
+
+        resultsBadge.textContent = 'Last analyzed: ' + (url || 'URL');
+
+        // Safely unpack data
+        const metrics = (data && data.metrics) || {};
+        const content = (data && data.content) || {};
+        const aiInfo = (data && data.aiInfo) || {};
+
+        // Title & category
+        contentTitle.textContent = content.title || new URL(url).hostname || 'Untitled page';
+        const category = aiInfo.category || 'Uncategorized';
+        summaryCategory.textContent = category.toUpperCase();
+        chipCategory.textContent = 'Category: ' + category;
+
+        // AI Summary
+        aiSummary.textContent = aiInfo.summary || 'No AI summary provided for this page.';
+
+        // Accessibility
+        if (typeof aiInfo.accessibilityScore === 'number') {
+            animateGauge(aiInfo.accessibilityScore);
+        } else {
+            animateGauge(0);
+        }
+
+        // Metrics
+        if (metrics.loadTime !== undefined) {
+            metricLoadTime.textContent = formatMs(metrics.loadTime);
+            metricLoadTimeRaw.textContent = metrics.loadTime + ' ms raw';
+        } else {
+            metricLoadTime.textContent = '—';
+            metricLoadTimeRaw.textContent = 'No timing data';
+        }
+
+        if (metrics.contentSize !== undefined) {
+            metricContentSize.textContent = formatBytes(metrics.contentSize);
+        } else {
+            metricContentSize.textContent = '—';
+        }
+
+        metricContentType.textContent = metrics.contentType || 'Unknown MIME';
+
+        if (content.wordCount !== undefined) {
+            metricWordCount.textContent = content.wordCount.toLocaleString();
+        } else {
+            metricWordCount.textContent = '—';
+        }
+
+        // Top words
+        topWordsContainer.innerHTML = '';
+        if (Array.isArray(content.topWords) && content.topWords.length) {
+            content.topWords.forEach((word, idx) => {
+                const pill = document.createElement('div');
+                pill.className = 'pill';
+                pill.textContent = word;
+                if (idx === 0) {
+                    pill.textContent = '🔥 ' + word;
+                }
+                topWordsContainer.appendChild(pill);
+            });
+        } else {
+            const pill = document.createElement('div');
+            pill.className = 'pill muted';
+            pill.textContent = 'No keyword data available.';
+            topWordsContainer.appendChild(pill);
+        }
+
+        // Headings
+        headingsList.innerHTML = '';
+        let headingsCount = 0;
+        if (Array.isArray(content.headings) && content.headings.length) {
+            content.headings.forEach((h) => {
+                const li = document.createElement('li');
+                li.textContent = h;
+                headingsList.appendChild(li);
+            });
+            headingsCount = content.headings.length;
+        }
+        chipHeadings.textContent = 'Headings: ' + headingsCount;
+
+        // Links
+        linksList.innerHTML = '';
+        let linksCount = 0;
+        if (Array.isArray(content.links) && content.links.length) {
+            content.links.forEach((linkObj) => {
+                const li = document.createElement('li');
+                let urlText = '';
+                let labelText = '';
+
+                if (typeof linkObj === 'string') {
+                    urlText = linkObj;
+                } else if (linkObj && typeof linkObj === 'object') {
+                    urlText = linkObj.href || linkObj.url || '#';
+                    labelText = linkObj.text || linkObj.label || '';
+                }
+
+                const a = document.createElement('a');
+                a.href = urlText;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+
+                a.textContent = labelText ? labelText + ' → ' + urlText : urlText;
+                li.appendChild(a);
+                linksList.appendChild(li);
+            });
+            linksCount = content.links.length;
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'No links detected or not returned by analyzer.';
+            linksList.appendChild(li);
+        }
+        chipLinks.textContent = 'Links: ' + linksCount;
+
+        // Raw JSON
+        resultJson.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function analyze() {
+        const url = urlInput.value.trim();
+
+        if (!url) {
+            showError('Please enter a URL.');
+            return;
+        }
+
+        clearError();
+        startLoading();
+
+        // reset cards view
+        [cardSummary, cardMetrics, cardContent, cardLinks, cardJson].forEach((card) => {
+            card.classList.remove('visible');
+        });
+
+        fetch('/webinspector/analyse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ websiteUrl: url })
+        })
+            .then((response) => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error('Network response was not ok (' + response.status + ')');
                 }
                 return response.json();
             })
-            .then(data => {
-                // Hide loading indicator
-                document.getElementById('loadingIndicator').style.display = 'none';
-
-                // Display result
-                document.getElementById('resultJson').textContent = JSON.stringify(data, null, 2);
-                document.getElementById('resultContainer').style.display = 'block';
+            .then((data) => {
+                stopLoading();
+                clearError();
+                setStatus('idle', 'Analysis complete for ' + url + '.');
+                renderAnalysis(data, url);
             })
-            .catch(error => {
-                // Hide loading indicator
-                document.getElementById('loadingIndicator').style.display = 'none';
-
-                // Show error message
+            .catch((error) => {
+                stopLoading();
                 showError('Error analyzing URL: ' + error.message);
+                resultsBadge.textContent = 'Analysis failed';
             });
-        });
+    }
 
-        function showError(message) {
-            const errorElement = document.getElementById('errorMessage');
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
+    analyzeButton.addEventListener('click', analyze);
+
+    urlInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            analyze();
         }
-    </script>
+    });
+
+    jsonToggle.addEventListener('click', () => {
+        jsonToggle.classList.toggle('on');
+        const isOn = jsonToggle.classList.contains('on');
+        jsonContainer.style.display = isOn ? 'block' : 'none';
+    });
+</script>
 </body>
 </html>
