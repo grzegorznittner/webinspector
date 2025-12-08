@@ -11,5 +11,5 @@ public class AnalyseRequest {
     /**
      * Raw content to analyze, e.g. HTML, URL, or free text.
      */
-    private String content;
+    private String websiteUrl;
 }

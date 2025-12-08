@@ -2,29 +2,34 @@ package eu.nittner.webinspector.service;
 
 import eu.nittner.webinspector.api.dto.AnalyseRequest;
 import eu.nittner.webinspector.api.dto.AnalyseResponse;
+import eu.nittner.webinspector.bean.WebAnalysisResultsBean;
+import eu.nittner.webinspector.bean.WebContentBean;
+import eu.nittner.webinspector.bean.WebsiteAIResponseBean;
 import org.springframework.stereotype.Service;
 
 @Service
 public class WebInspectorService {
+    private WebContentService webContentService;
+    private WebAnalysisService webAnalysisService;
+    private WebsiteAIService websiteAIService;
 
     public AnalyseResponse analyse(AnalyseRequest request) {
-        if (request == null || request.getContent() == null || request.getContent().isBlank()) {
+        if (request == null || request.getWebsiteUrl() == null || request.getWebsiteUrl().isBlank()) {
             return new AnalyseResponse(
                     "No content provided",
                     "The request body was empty or contained only whitespace."
             );
         }
 
-        // Long‑term placeholder for real analysis logic.
-        // Here you could:
-        // - Run static checks on the HTML
-        // - Call an AI model
-        // - Extract metadata, links, issues, etc.
-        String content = request.getContent();
-        int length = content.length();
+        String websiteUrl = request.getWebsiteUrl();
+        WebContentBean webContentBean = webContentService.fetchWebsiteData(websiteUrl);
+
+        WebAnalysisResultsBean analysisResults = webAnalysisService.analyseWebsiteContent(webContentBean.getContent());
+
+        WebsiteAIResponseBean aiResponse = websiteAIService.analyseWebsite(websiteUrl);
 
         String summary = "Content analyzed successfully";
-        String details = "Content length: " + length + " characters.";
+        String details = "Content length: " + webContentBean.getSize() + " characters.";
 
         return new AnalyseResponse(summary, details);
     }
