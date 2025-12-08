@@ -23,16 +23,21 @@ public class WebInspectorService {
             );
         }
 
-        String websiteUrl = request.getWebsiteUrl();
-        WebContentBean webContentBean = webContentService.fetchWebsiteData(websiteUrl);
+        try {
+            String websiteUrl = request.getWebsiteUrl();
+            WebContentBean webContentBean = webContentService.fetchWebsiteData(websiteUrl);
 
-        WebAnalysisResultsBean analysisResults = webAnalysisService.analyseWebsiteContent(webContentBean.getContent());
+            WebAnalysisResultsBean analysisResults = webAnalysisService.analyseWebsiteContent(request.getWebsiteUrl(), webContentBean.getContent());
 
-        WebsiteAIResponseBean aiResponse = websiteAIService.analyseWebsite(websiteUrl);
+            WebsiteAIResponseBean aiResponse = websiteAIService.analyseWebsite(websiteUrl);
 
-        String summary = "Content analyzed successfully";
-        String details = "Content length: " + webContentBean.getSize() + " characters.";
-
-        return new AnalyseResponse(summary, details);
+            String summary = "Content analyzed successfully";
+            String details = "Content length: " + webContentBean.getSize() + " characters.";
+            return new AnalyseResponse(summary, details);
+        } catch (Exception e) {
+            String summary = "Content analysis failed";
+            String details = "Error: " + e.getMessage();
+            return new AnalyseResponse(summary, details);
+        }
     }
 }
