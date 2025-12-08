@@ -1,0 +1,6 @@
+POST /webinspector/analyse
+Content-Type: application/json
+
+{
+  "content": "<html><head><title>Test</title></head><body>Example</body></html>"
+}
