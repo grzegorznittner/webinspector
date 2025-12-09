@@ -10,7 +10,7 @@ The project demonstrates a typical Spring MVC + HTML/CSS front‑end setup packa
 - **Spring Boot backend**
   - Auto-configured embedded server (Tomcat/Jetty/Undertow depending on setup)
   - Simple controller layer returning views
-  - Conventional configuration via `application.properties` / `application.yml`
+  - Conventional configuration via `application.properties`
 
 - **Simple UI**
   - Single-page style HTML front-end
