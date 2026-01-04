@@ -62,7 +62,7 @@ public class WebInspectorService {
         // Extract top words from word frequencies
         List<String> topWords = analysisResults.getWordFrequencies().entrySet().stream()
                 .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-                .limit(10)
+                .limit(5)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
         content.setTopWords(topWords);
